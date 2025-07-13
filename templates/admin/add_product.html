@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-plus me-2"></i>Add New Product</h1>
+    <a href="{{ url_for('admin_products') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Products
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Product Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Product Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="category_id" class="form-label">Category *</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label">Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="stock" class="form-label">Stock Quantity *</label>
+                            <input type="number" class="form-control" id="stock" name="stock" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label">Image URL (Optional)</label>
+                        <input type="url" class="form-control" id="image_url" name="image_url" 
+                               placeholder="https://example.com/image.jpg">
+                        <small class="text-muted">Leave empty to use default placeholder image</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-2"></i>Reset Form
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Add Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Product Preview</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="bg-light py-4 rounded">
+                        <i class="fas fa-box fa-3x text-muted" id="preview-icon"></i>
+                    </div>
+                </div>
+                <div id="preview-content">
+                    <h6 id="preview-name" class="text-muted">Product Name</h6>
+                    <p id="preview-description" class="text-muted small">Product description will appear here...</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="preview-price" class="text-primary">$0.00</span>
+                        <span id="preview-category" class="badge bg-secondary">Category</span>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Stock: <span id="preview-stock">0</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-success me-2"></i>Use clear, descriptive product names</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Include key features in description</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Set realistic stock quantities</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Choose appropriate category</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live preview functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('name');
+    const descriptionInput = document.getElementById('description');
+    const priceInput = document.getElementById('price');
+    const stockInput = document.getElementById('stock');
+    const categorySelect = document.getElementById('category_id');
+    
+    const previewName = document.getElementById('preview-name');
+    const previewDescription = document.getElementById('preview-description');
+    const previewPrice = document.getElementById('preview-price');
+    const previewStock = document.getElementById('preview-stock');
+    const previewCategory = document.getElementById('preview-category');
+    
+    function updatePreview() {
+        previewName.textContent = nameInput.value || 'Product Name';
+        previewDescription.textContent = descriptionInput.value || 'Product description will appear here...';
+        previewPrice.textContent = '$' + (priceInput.value || '0.00');
+        previewStock.textContent = stockInput.value || '0';
+        previewCategory.textContent = categorySelect.options[categorySelect.selectedIndex]?.text || 'Category';
+    }
+    
+    nameInput.addEventListener('input', updatePreview);
+    descriptionInput.addEventListener('input', updatePreview);
+    priceInput.addEventListener('input', updatePreview);
+    stockInput.addEventListener('input', updatePreview);
+    categorySelect.addEventListener('change', updatePreview);
+});
+</script>
+{% endblock %} 

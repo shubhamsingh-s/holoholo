@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Holoholo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Search Results</h2>
+                {% if query %}
+                <p class="text-muted">Showing results for "<strong>{{ query }}</strong>"</p>
+                {% endif %}
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="text-muted me-3">{{ products|length }} products found</span>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" onclick="setView('grid')">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setView('list')">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        {% if products %}
+        <div class="row" id="products-grid">
+            {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 product-card">
+                    <div class="card-img-top bg-light text-center py-4">
+                        <i class="fas fa-box fa-3x text-muted"></i>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted">{{ product.description[:100] }}...</p>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="h5 text-primary mb-0">${{ "%.2f"|format(product.price) }}</span>
+                                <span class="badge bg-success">{{ product.category.name }}</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-primary btn-sm flex-fill">View Details</a>
+                                {% if current_user.is_authenticated %}
+                                <form method="POST" action="{{ url_for('add_to_cart') }}" class="flex-fill">
+                                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="row" id="products-list" style="display: none;">
+            {% for product in products %}
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="row g-0">
+                        <div class="col-md-2">
+                            <div class="bg-light text-center py-4">
+                                <i class="fas fa-box fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h5 class="card-title">{{ product.name }}</h5>
+                                        <p class="card-text text-muted">{{ product.description[:150] }}...</p>
+                                        <span class="badge bg-success">{{ product.category.name }}</span>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <span class="h5 text-primary">${{ "%.2f"|format(product.price) }}</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-primary btn-sm flex-fill">View Details</a>
+                                            {% if current_user.is_authenticated %}
+                                            <form method="POST" action="{{ url_for('add_to_cart') }}" class="flex-fill">
+                                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4>No products found</h4>
+            <p class="text-muted">Try adjusting your search terms or browse our categories.</p>
+            <div class="mt-4">
+                <a href="{{ url_for('products') }}" class="btn btn-primary me-2">Browse All Products</a>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Back to Home</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search Suggestions -->
+{% if not products and query %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Search Suggestions</h5>
+            </div>
+            <div class="card-body">
+                <p>Try searching for:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('search', q='electronics') }}" class="btn btn-outline-primary btn-sm">Electronics</a>
+                    <a href="{{ url_for('search', q='clothing') }}" class="btn btn-outline-primary btn-sm">Clothing</a>
+                    <a href="{{ url_for('search', q='books') }}" class="btn btn-outline-primary btn-sm">Books</a>
+                    <a href="{{ url_for('search', q='sports') }}" class="btn btn-outline-primary btn-sm">Sports</a>
+                    <a href="{{ url_for('search', q='home') }}" class="btn btn-outline-primary btn-sm">Home & Garden</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setView(view) {
+    const gridView = document.getElementById('products-grid');
+    const listView = document.getElementById('products-list');
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    
+    if (view === 'grid') {
+        gridView.style.display = 'flex';
+        listView.style.display = 'none';
+        buttons[0].classList.add('active');
+        buttons[1].classList.remove('active');
+    } else {
+        gridView.style.display = 'none';
+        listView.style.display = 'block';
+        buttons[0].classList.remove('active');
+        buttons[1].classList.add('active');
+    }
+}
+</script>
+{% endblock %} 

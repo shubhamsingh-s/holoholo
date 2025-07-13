@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Holoholo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Product Images -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="bg-light py-5 rounded">
+                    <i class="fas fa-box fa-5x text-muted"></i>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Product Image Placeholder</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Info -->
+    <div class="col-md-6">
+        <h1 class="mb-3">{{ product.name }}</h1>
+        <div class="mb-3">
+            <span class="h3 text-primary">${{ "%.2f"|format(product.price) }}</span>
+            <span class="badge bg-success ms-2">{{ product.category.name }}</span>
+        </div>
+        
+        <div class="mb-3">
+            <p class="text-muted">{{ product.description }}</p>
+        </div>
+        
+        <div class="mb-3">
+            <strong>Stock:</strong> 
+            {% if product.stock > 0 %}
+                <span class="text-success">{{ product.stock }} available</span>
+            {% else %}
+                <span class="text-danger">Out of stock</span>
+            {% endif %}
+        </div>
+        
+        {% if current_user.is_authenticated and product.stock > 0 %}
+        <form method="POST" action="{{ url_for('add_to_cart') }}" class="mb-3">
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}">
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% elif not current_user.is_authenticated %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Please <a href="{{ url_for('login') }}" class="alert-link">login</a> to add items to your cart.
+        </div>
+        {% endif %}
+        
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-heart me-2"></i>Add to Wishlist
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-share me-2"></i>Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reviews Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-star me-2"></i>Customer Reviews
+                    {% if reviews %}
+                    <span class="badge bg-primary ms-2">{{ reviews|length }} reviews</span>
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if current_user.is_authenticated %}
+                <!-- Add Review Form -->
+                <div class="mb-4">
+                    <h5>Write a Review</h5>
+                    <form method="POST" action="{{ url_for('add_review') }}">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Rating</label>
+                                <select class="form-select" name="rating" required>
+                                    <option value="">Select rating</option>
+                                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                                    <option value="4">⭐⭐⭐⭐ Very Good</option>
+                                    <option value="3">⭐⭐⭐ Good</option>
+                                    <option value="2">⭐⭐ Fair</option>
+                                    <option value="1">⭐ Poor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Comment</label>
+                            <textarea class="form-control" name="comment" rows="3" placeholder="Share your experience with this product..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Submit Review</button>
+                    </form>
+                </div>
+                <hr>
+                {% endif %}
+                
+                <!-- Reviews List -->
+                {% if reviews %}
+                <div class="reviews-list">
+                    {% for review in reviews %}
+                    <div class="review-item border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="mb-2">
+                                    {% for i in range(review.rating) %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - review.rating) %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endfor %}
+                                    <span class="ms-2 text-muted">{{ review.user.username }}</span>
+                                </div>
+                                <p class="mb-1">{{ review.comment }}</p>
+                                <small class="text-muted">{{ review.created_at.strftime('%B %d, %Y') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h5>No reviews yet</h5>
+                    <p class="text-muted">Be the first to review this product!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Related Products</h3>
+        <div class="row">
+            {% for related_product in product.category.products[:4] %}
+            {% if related_product.id != product.id %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-img-top bg-light text-center py-3">
+                        <i class="fas fa-box fa-2x text-muted"></i>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">{{ related_product.name }}</h6>
+                        <p class="card-text text-primary">${{ "%.2f"|format(related_product.price) }}</p>
+                        <a href="{{ url_for('product_detail', product_id=related_product.id) }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
