@@ -72,7 +72,7 @@
                             </small>
                         </td>
                         <td>
-                            <strong class="text-primary">${{ "%.2f"|format(order.total_amount) }}</strong>
+                            <strong class="text-primary">₹{{ "%.2f"|format(order.total_amount) }}</strong>
                         </td>
                         <td>
                             <select class="form-select form-select-sm" onchange="updateOrderStatus({{ order.id }}, this.value)">
@@ -147,7 +147,7 @@
     <div class="col-md-3">
         <div class="card bg-success text-white">
             <div class="card-body text-center">
-                <h4>${{ "%.2f"|format(total_revenue) if total_revenue else "0.00" }}</h4>
+                                        <h4>₹{{ "%.2f"|format(total_revenue) if total_revenue else "0.00" }}</h4>
                 <p class="mb-0">Total Revenue</p>
             </div>
         </div>

@@ -8,12 +8,19 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-body text-center">
-                <div class="bg-light py-5 rounded">
-                    <i class="fas fa-box fa-5x text-muted"></i>
-                </div>
-                <div class="mt-3">
-                    <small class="text-muted">Product Image Placeholder</small>
-                </div>
+                {% if product.image_url %}
+                    <div class="bg-light py-4 rounded">
+                        <img src="{{ url_for('static', filename=product.image_url) }}" 
+                             alt="{{ product.name }}" class="img-fluid" style="max-height: 400px; object-fit: contain;">
+                    </div>
+                {% else %}
+                    <div class="bg-light py-5 rounded">
+                        <i class="fas fa-box fa-5x text-muted"></i>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Product Image Placeholder</small>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -22,7 +29,7 @@
     <div class="col-md-6">
         <h1 class="mb-3">{{ product.name }}</h1>
         <div class="mb-3">
-            <span class="h3 text-primary">${{ "%.2f"|format(product.price) }}</span>
+                            <span class="h3 text-primary">₹{{ "%.2f"|format(product.price) }}</span>
             <span class="badge bg-success ms-2">{{ product.category.name }}</span>
         </div>
         
@@ -164,7 +171,7 @@
                     </div>
                     <div class="card-body">
                         <h6 class="card-title">{{ related_product.name }}</h6>
-                        <p class="card-text text-primary">${{ "%.2f"|format(related_product.price) }}</p>
+                        <p class="card-text text-primary">₹{{ "%.2f"|format(related_product.price) }}</p>
                         <a href="{{ url_for('product_detail', product_id=related_product.id) }}" class="btn btn-outline-primary btn-sm">View Details</a>
                     </div>
                 </div>

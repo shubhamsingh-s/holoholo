@@ -17,7 +17,7 @@
                 <h5 class="mb-0">Product Information</h5>
             </div>
             <div class="card-body">
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">Product Name *</label>
@@ -43,7 +43,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="price" class="form-label">Price *</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₹</span>
                                 <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required>
                             </div>
                         </div>
@@ -54,10 +54,9 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="image_url" class="form-label">Image URL (Optional)</label>
-                        <input type="url" class="form-control" id="image_url" name="image_url" 
-                               placeholder="https://example.com/image.jpg">
-                        <small class="text-muted">Leave empty to use default placeholder image</small>
+                        <label for="image" class="form-label">Product Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <small class="text-muted">Upload an image (PNG, JPG, JPEG, GIF, WEBP). Max size: 16MB</small>
                     </div>
                     
                     <div class="d-flex justify-content-between">
@@ -81,6 +80,7 @@
             <div class="card-body">
                 <div class="text-center mb-3">
                     <div class="bg-light py-4 rounded">
+                        <img id="image-preview" src="" alt="Product Preview" class="img-fluid" style="max-height: 200px; object-fit: contain; display: none;">
                         <i class="fas fa-box fa-3x text-muted" id="preview-icon"></i>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                     <h6 id="preview-name" class="text-muted">Product Name</h6>
                     <p id="preview-description" class="text-muted small">Product description will appear here...</p>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span id="preview-price" class="text-primary">$0.00</span>
+                        <span id="preview-price" class="text-primary">₹0.00</span>
                         <span id="preview-category" class="badge bg-secondary">Category</span>
                     </div>
                     <div class="mt-2">
@@ -124,20 +124,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceInput = document.getElementById('price');
     const stockInput = document.getElementById('stock');
     const categorySelect = document.getElementById('category_id');
+    const imageInput = document.getElementById('image');
     
     const previewName = document.getElementById('preview-name');
     const previewDescription = document.getElementById('preview-description');
     const previewPrice = document.getElementById('preview-price');
     const previewStock = document.getElementById('preview-stock');
     const previewCategory = document.getElementById('preview-category');
+    const imagePreview = document.getElementById('image-preview');
+    const previewIcon = document.getElementById('preview-icon');
     
     function updatePreview() {
         previewName.textContent = nameInput.value || 'Product Name';
         previewDescription.textContent = descriptionInput.value || 'Product description will appear here...';
-        previewPrice.textContent = '$' + (priceInput.value || '0.00');
+                        previewPrice.textContent = '₹' + (priceInput.value || '0.00');
         previewStock.textContent = stockInput.value || '0';
         previewCategory.textContent = categorySelect.options[categorySelect.selectedIndex]?.text || 'Category';
     }
+    
+    // Image preview functionality
+    imageInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                previewIcon.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+            previewIcon.style.display = 'block';
+        }
+    });
     
     nameInput.addEventListener('input', updatePreview);
     descriptionInput.addEventListener('input', updatePreview);

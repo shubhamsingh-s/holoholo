@@ -6,12 +6,17 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import json
+import uuid
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///holoholo.db'
+
+# Configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///holoholo.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -20,6 +25,21 @@ login_manager.login_view = 'login'
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Helper functions for image upload
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def save_image(file):
+    if file and allowed_file(file.filename):
+        # Generate unique filename
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(filepath)
+        return f"uploads/{unique_filename}"
+    return None
 
 # Database Models
 class User(UserMixin, db.Model):
@@ -370,12 +390,24 @@ def admin_add_product():
         stock = int(request.form.get('stock'))
         category_id = int(request.form.get('category_id'))
         
+        # Handle image upload
+        image_url = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '':
+                image_url = save_image(file)
+                if not image_url:
+                    flash('Invalid image file. Please upload a valid image (PNG, JPG, JPEG, GIF, WEBP).', 'error')
+                    categories = Category.query.all()
+                    return render_template('admin/add_product.html', categories=categories)
+        
         product = Product(
             name=name,
             description=description,
             price=price,
             stock=stock,
-            category_id=category_id
+            category_id=category_id,
+            image_url=image_url
         )
         db.session.add(product)
         db.session.commit()
@@ -385,6 +417,36 @@ def admin_add_product():
     
     categories = Category.query.all()
     return render_template('admin/add_product.html', categories=categories)
+
+@app.route('/admin/edit_product/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def admin_edit_product(product_id):
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('home'))
+    product = Product.query.get_or_404(product_id)
+    if request.method == 'POST':
+        product.name = request.form.get('name')
+        product.description = request.form.get('description')
+        product.price = float(request.form.get('price'))
+        product.stock = int(request.form.get('stock'))
+        product.category_id = int(request.form.get('category_id'))
+        # Handle image upload
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '':
+                image_url = save_image(file)
+                if image_url:
+                    product.image_url = image_url
+                else:
+                    flash('Invalid image file. Please upload a valid image (PNG, JPG, JPEG, GIF, WEBP).', 'error')
+                    categories = Category.query.all()
+                    return render_template('admin/edit_product.html', product=product, categories=categories)
+        db.session.commit()
+        flash('Product updated successfully!', 'success')
+        return redirect(url_for('admin_products'))
+    categories = Category.query.all()
+    return render_template('admin/edit_product.html', product=product, categories=categories)
 
 @app.route('/admin/orders')
 @login_required
@@ -408,7 +470,8 @@ def admin_users():
     users = User.query.all()
     return render_template('admin/users.html', users=users)
 
-if __name__ == '__main__':
+# Initialize database and create sample data
+def init_db():
     with app.app_context():
         db.create_all()
         
@@ -438,18 +501,20 @@ if __name__ == '__main__':
         # Create sample products if not exist
         if Product.query.count() == 0:
             products = [
-                Product(name='Smartphone X', description='Latest smartphone with advanced features', price=599.99, stock=50, category_id=1),
-                Product(name='Laptop Pro', description='High-performance laptop for professionals', price=1299.99, stock=25, category_id=1),
-                Product(name='Wireless Headphones', description='Premium wireless headphones with noise cancellation', price=199.99, stock=100, category_id=1),
-                Product(name='Men\'s T-Shirt', description='Comfortable cotton t-shirt', price=24.99, stock=200, category_id=2),
-                Product(name='Women\'s Dress', description='Elegant summer dress', price=89.99, stock=75, category_id=2),
-                Product(name='Running Shoes', description='Professional running shoes', price=129.99, stock=60, category_id=5),
-                Product(name='Garden Tool Set', description='Complete set of garden tools', price=79.99, stock=40, category_id=4),
-                Product(name='Programming Book', description='Learn Python programming', price=39.99, stock=80, category_id=3)
+                Product(name='Smartphone X', description='Latest smartphone with advanced features', price=599.99, stock=50, category_id=1, image_url='https://via.placeholder.com/400x400/007bff/ffffff?text=Smartphone'),
+                Product(name='Laptop Pro', description='High-performance laptop for professionals', price=1299.99, stock=25, category_id=1, image_url='https://via.placeholder.com/400x400/28a745/ffffff?text=Laptop'),
+                Product(name='Wireless Headphones', description='Premium wireless headphones with noise cancellation', price=199.99, stock=100, category_id=1, image_url='https://via.placeholder.com/400x400/dc3545/ffffff?text=Headphones'),
+                Product(name='Men\'s T-Shirt', description='Comfortable cotton t-shirt', price=24.99, stock=200, category_id=2, image_url='https://via.placeholder.com/400x400/ffc107/000000?text=T-Shirt'),
+                Product(name='Women\'s Dress', description='Elegant summer dress', price=89.99, stock=75, category_id=2, image_url='https://via.placeholder.com/400x400/17a2b8/ffffff?text=Dress'),
+                Product(name='Running Shoes', description='Professional running shoes', price=129.99, stock=60, category_id=5, image_url='https://via.placeholder.com/400x400/6f42c1/ffffff?text=Shoes'),
+                Product(name='Garden Tool Set', description='Complete set of garden tools', price=79.99, stock=40, category_id=4, image_url='https://via.placeholder.com/400x400/fd7e14/ffffff?text=Tools'),
+                Product(name='Programming Book', description='Learn Python programming', price=39.99, stock=80, category_id=3, image_url='https://via.placeholder.com/400x400/20c997/ffffff?text=Book')
             ]
             for product in products:
                 db.session.add(product)
         
         db.session.commit()
-    
-    app.run(debug=True) 
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 

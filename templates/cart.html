@@ -19,7 +19,12 @@
                 <div class="row align-items-center border-bottom pb-3 mb-3">
                     <div class="col-md-2">
                         <div class="bg-light text-center py-3 rounded">
-                            <i class="fas fa-box fa-2x text-muted"></i>
+                            {% if item.product.image_url %}
+                                <img src="{{ url_for('static', filename=item.product.image_url) }}" 
+                                     alt="{{ item.product.name }}" class="img-fluid" style="max-height: 80px; object-fit: contain;">
+                            {% else %}
+                                <i class="fas fa-box fa-2x text-muted"></i>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -27,7 +32,7 @@
                         <p class="text-muted mb-0">{{ item.product.category.name }}</p>
                     </div>
                     <div class="col-md-2 text-center">
-                        <span class="text-primary">${{ "%.2f"|format(item.product.price) }}</span>
+                        <span class="text-primary">₹{{ "%.2f"|format(item.product.price) }}</span>
                     </div>
                     <div class="col-md-2">
                         <form method="POST" action="{{ url_for('update_cart') }}" class="d-flex align-items-center">
@@ -38,7 +43,7 @@
                         </form>
                     </div>
                     <div class="col-md-1 text-center">
-                        <span class="fw-bold">${{ "%.2f"|format(item.total) }}</span>
+                        <span class="fw-bold">₹{{ "%.2f"|format(item.total) }}</span>
                     </div>
                     <div class="col-md-1">
                         <form method="POST" action="{{ url_for('update_cart') }}">
@@ -64,7 +69,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span>Subtotal:</span>
-                    <span>${{ "%.2f"|format(total) }}</span>
+                    <span>₹{{ "%.2f"|format(total) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Shipping:</span>
@@ -72,12 +77,12 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Tax:</span>
-                    <span>${{ "%.2f"|format(total * 0.08) }}</span>
+                    <span>₹{{ "%.2f"|format(total * 0.08) }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between mb-3">
                     <strong>Total:</strong>
-                    <strong class="text-primary">${{ "%.2f"|format(total * 1.08) }}</strong>
+                    <strong class="text-primary">₹{{ "%.2f"|format(total * 1.08) }}</strong>
                 </div>
                 
                 <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 mb-2">
@@ -127,7 +132,7 @@
                     </div>
                     <div class="card-body">
                         <h6 class="card-title">Product {{ i + 1 }}</h6>
-                        <p class="card-text text-primary">${{ "%.2f"|format(19.99 + i * 10) }}</p>
+                        <p class="card-text text-primary">₹{{ "%.2f"|format(19.99 + i * 10) }}</p>
                         <a href="#" class="btn btn-outline-primary btn-sm">View Details</a>
                     </div>
                 </div>
